@@ -1,7 +1,6 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
 const {handleNotFound, handleBadRequest, handleCreated, handleNoContent, handleInvalidId} = require('../utils/errorHandler.js')
-const {validUuid, validDate} = require('../utils/validators.js');
-const { v4: uuidv4 } = require('uuid');
+const {validDate} = require('../utils/validators.js');
 
 
 async function getAgentes(req, res) {
