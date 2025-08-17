@@ -21,7 +21,7 @@ exports.seed = async function(knex) {
     { titulo: 'Assalto a residência', descricao: 'Família feita refém - crime', status: 'solucionado', agente_id: agentesIds[6] },
     { titulo: 'Estelionato', descricao: 'Golpes em idosos', status: 'aberto', agente_id: agentesIds[7] },
     { titulo: 'Tráfico internacional', descricao: 'Operação conjunta com a polícia federal', status: 'solucionado', agente_id: agentesIds[8] },
-    { titulo: 'Incêndio criminoso', descricao: 'Queimada em depósito de produtos', status: 'aberto', agente_id: agentesIds[9] }
+    { titulo: 'Incêndio criminoso - crime', descricao: 'Queimada em depósito de produtos', status: 'aberto', agente_id: agentesIds[9] }
   ];
 
   await knex('casos').insert(casosData);

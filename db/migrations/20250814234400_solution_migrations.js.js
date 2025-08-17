@@ -14,7 +14,7 @@ exports.up = function(knex) {
       table.increments('id').primary();
       table.string('titulo').notNullable();
       table.text('descricao').notNullable();
-      table.enu('status', ['aberto', 'em andamento', 'fechado']).notNullable();
+      table.enu('status', ['aberto', 'solucionado']).notNullable();
       table
         .integer('agente_id')
         .unsigned() // irrelevante no Postgres, mas ok

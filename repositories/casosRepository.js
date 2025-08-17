@@ -10,6 +10,29 @@ async function allCases(){
     }
 }
 
+
+async function filteredCases({agente_id, status, q}) {
+    let query = db('casos');
+
+    if (agente_id) {
+        query = query.where('agente_id', agente_id);
+    }
+    
+    if (status) {
+        query = query.where('status', status);
+    }
+    
+    if (q) {
+        query = query.andWhere(function() {
+            this.where('titulo', 'ilike', `%${q}%`)
+                .orWhere('descricao', 'ilike', `%${q}%`);
+        });
+    }
+
+    const results = await query.select('*');
+    return results;
+}
+
 async function caseById(id) {
     try {
         const case_ = await db('casos').where('id', id).first();
@@ -110,6 +133,7 @@ async function deleteCaseOnRepo(id) {
 
 module.exports = {
     allCases,
+    filteredCases,
     caseById,
     caseByAgentId,
     casesByStatus,

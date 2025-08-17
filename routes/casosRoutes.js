@@ -19,11 +19,11 @@ const casosController = require('../controllers/casosController.js');
  *       - in: query
  *         name: agente_id
  *         schema:
- *           type: string
- *           format: uuid
+ *           type: integer
+ *           format: id
  *         required: false
  *         description: Filtra os casos atribuídos a um agente específico
- *         example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *         example: 1
  *       - in: query
  *         name: status
  *         schema:
@@ -49,8 +49,8 @@ const casosController = require('../controllers/casosController.js');
  *                 type: object
  *                 properties:
  *                   id:
- *                     type: string
- *                     example: 7f1d1566-a232-4360-b844-312c74bc283a
+ *                     type: integer
+ *                     example: 2
  *                   titulo:
  *                     type: string
  *                     example: homicídio
@@ -61,8 +61,8 @@ const casosController = require('../controllers/casosController.js');
  *                     type: string
  *                     example: aberto
  *                   agente_id:
- *                     type: string
- *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                     type: integer
+ *                     example: 3
  *       400:
  *         description: Parâmetros inválidos (status ou agente_id incorretos)
  *       404:
@@ -88,8 +88,8 @@ router.get('/casos', casosController.getAllCases);
  *                 type: object
  *                 properties:
  *                   id:
- *                     type: string
- *                     example: f5fb2ad5-22a8-4cb4-90f2-8733517a0d46
+ *                     type: integer
+ *                     example: 4
  *                   titulo:
  *                     type: string
  *                     example: homicídio
@@ -100,8 +100,8 @@ router.get('/casos', casosController.getAllCases);
  *                     type: string
  *                     example: fechado
  *                   agente_id:
- *                     type: string
- *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                     type: integer
+ *                     example: 5
  */
 router.get('/casos/:id', casosController.getCaseById);
 
@@ -116,10 +116,10 @@ router.get('/casos/:id', casosController.getCaseById);
  *         name: id
  *         required: true
  *         schema:
- *           type: string
- *           format: uuid
+ *           type: integer
+ *           format: id
  *         description: ID do caso
- *         example: 7f1d1566-a232-4360-b844-312c74bc283a
+ *         example: 1
  *     responses:
  *       200:
  *         description: Dados do agente retornados com sucesso
@@ -129,8 +129,8 @@ router.get('/casos/:id', casosController.getCaseById);
  *               type: object
  *               properties:
  *                 id:
- *                   type: string
- *                   example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                   type: integer
+ *                   example: 6
  *                 nome:
  *                   type: string
  *                   example: Rommel Carneiro
@@ -176,8 +176,8 @@ router.get('/casos/:id/agente', casosController.getAgentByCase)
  *                 type: string
  *                 example: em andamento
  *               agente_id: 
- *                 type: string
- *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1                
+ *                 type: integer
+ *                 example: 7          
  *  
  *     responses:
  *       201:
@@ -201,7 +201,7 @@ router.post('/casos', casosController.addNewCase);
  *         required: true
  *         description: ID do caso a ser atualizado
  *         schema:
- *           type: string
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -224,8 +224,8 @@ router.post('/casos', casosController.addNewCase);
  *                 type: string
  *                 example: em andamento
  *               agente_id: 
- *                 type: string
- *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1  
+ *                 type: integer
+ *                 example: 8
  *     responses:
  *       200:
  *         description: Caso atualizado com sucesso
@@ -248,7 +248,7 @@ router.put('/casos/:id', casosController.updateCase);
  *         required: true
  *         description: ID do caso a ser atualizado
  *         schema:
- *           type: string
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -266,8 +266,8 @@ router.put('/casos/:id', casosController.updateCase);
  *                 type: string
  *                 example: em andamento
  *               agente_id: 
- *                 type: string
- *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1 
+ *                 type: integer
+ *                 example: 9
  *     responses:
  *       200:
  *         description: Caso atualizado com sucesso
@@ -290,7 +290,7 @@ router.patch('/casos/:id', casosController.patchCase);
  *         required: true
  *         description: ID do caso a ser removido
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       204:
  *         description: caso removido com sucesso (sem corpo na resposta)

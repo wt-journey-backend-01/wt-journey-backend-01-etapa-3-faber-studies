@@ -1,10 +1,3 @@
-function validUuid(uuid) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(uuid)) {
-        return false;
-    }
-    return true;
-}
 
 function validDate(date) {
     const dateOfIncorp = new Date(date);
@@ -26,14 +19,13 @@ function verifyAgentExists(id, agents) {
     return agents.some(agent => agent.id === id);
 }
 
-const validStatusesList = ['aberto', 'em andamento', 'fechado'];
+const validStatusesList = ['aberto', 'solucionado'];
 
 function validStatus(status) {
     return validStatusesList.includes(status.toLowerCase());
 }
 
 module.exports = {
-    validUuid,
     validDate,
     verifyAgentExists,
     validStatusesList,

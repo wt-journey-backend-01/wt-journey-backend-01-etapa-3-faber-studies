@@ -1,29 +1,13 @@
 /* A fazer */
 
 const casosRepository = require('../repositories/casosRepository');
-const { allAgents, agentsById } = require('../repositories/agentesRepository');
+const { agentsById } = require('../repositories/agentesRepository');
 const {handleNotFound, handleBadRequest, handleInvalidId, handleCreated, handleNoContent} = require('../utils/errorHandler');
-const { validUuid, validDate, verifyAgentExists, validStatus, validStatusesList } = require('../utils/validators');
-const { v4: uuidv4 } = require('uuid');
-const { update } = require('../db/db');
+const {validStatus, validStatusesList } = require('../utils/validators');
 
 async function getAllCases(req, res){
     try {
         let {agente_id, status, q} = req.query;
-
-        let filteredCases = await casosRepository.allCases();
-
-        if (agente_id) {
-
-            agente_id = agente_id.toString().trim();
-
-            filteredCases = await casosRepository.caseByAgentId(agente_id);
-            
-            if (!filteredCases) {
-                return handleNotFound(res, error.message,  'Não encontrado');
-            }
-            
-        }
 
         if (status) {
             status = status.toString().trim();
@@ -31,24 +15,18 @@ async function getAllCases(req, res){
             if (!validStatus(status)) {
                 return handleBadRequest(res, `Status inválido. Status existentes: ${validStatusesList.join(', ')}`);
             }
-
-            filteredCases = await casosRepository.casesByStatus(status);
-            
-            if (!filteredCases) {
-                return handleNotFound(res, 'Não encontrado');
-            }
         }
 
         if (q) {
             q = q.toString().trim();
-
-            filteredCases = filteredCases.filter(c => 
-                c.titulo.toLowerCase().includes(q.toLowerCase()) ||
-                c.descricao.toLowerCase().includes(q.toLowerCase())
-            );
         }
 
-        return res.status(200).json(filteredCases);
+        const result = await casosRepository.filteredCases({agente_id, status, q});
+        if (!result || result.length === 0) {
+            return handleNotFound(res, 'Nenhum resultado');
+        }
+        return res.status(200).json(result);
+
     } catch (error) {
         return handleBadRequest(res, error.message || 'Erro ao buscar casos');
     }
@@ -57,7 +35,7 @@ async function getAllCases(req, res){
 
 async function getAgentByCase(req, res) {
     try {
-        const id = req.params.id.toString().trim();
+        const id = req.params.id;
 
         const case_ = await casosRepository.caseById(id);
         if(!case_) {
@@ -75,7 +53,7 @@ async function getAgentByCase(req, res) {
 
 async function getCaseById(req, res){
     try {
-        const id = req.params.id.toString().trim();
+        const id = req.params.id;
 
         const case_= await casosRepository.caseById(id);
         if (!case_) {
@@ -122,7 +100,7 @@ async function addNewCase(req, res){
 
 async function updateCase(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
         const updates = req.body;
 
 
@@ -181,7 +159,7 @@ async function updateCase(req, res) {
 
 async function patchCase(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
         const updates = req.body;
 
         const caseExists = await casosRepository.caseById(id);
@@ -228,7 +206,7 @@ async function patchCase(req, res) {
 
 async function deleteCase(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
 
         const caseExists = await casosRepository.caseById(id);
         if (!caseExists) {

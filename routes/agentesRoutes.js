@@ -44,8 +44,8 @@ const agentesController = require('../controllers/agentesController.js');
  *                 type: object
  *                 properties:
  *                   id:
- *                     type: string
- *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                     type: integer
+ *                     example: 1
  *                   nome:
  *                     type: string
  *                     example: João Silva
@@ -69,11 +69,11 @@ router.get('/agentes', agentesController.getAgentes);
  *       - in: path
  *         name: id
  *         required: true
- *         description: UUID do agente
+ *         description: ID do agente
  *         schema:
- *           type: string
- *           format: uuid
- *           example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *           type: integer
+ *           format: id
+ *           example: 1
  *     responses:
  *       200:
  *         description: Agente retornado com sucesso
@@ -83,8 +83,8 @@ router.get('/agentes', agentesController.getAgentes);
  *               type: object
  *               properties:
  *                 id:
- *                   type: string
- *                   example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                   type: integer
+ *                   example: 2
  *                 nome:
  *                   type: string
  *                   example: Rommel Carneiro
@@ -163,7 +163,7 @@ router.post('/agentes', agentesController.addNewAgent);
  *         required: true
  *         description: ID do agente a ser atualizado
  *         schema:
- *           type: string
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -202,7 +202,7 @@ router.put('/agentes/:id', agentesController.updateAgent);
  *         required: true
  *         description: ID do agente a ser atualizado
  *         schema:
- *           type: string
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -241,7 +241,7 @@ router.patch('/agentes/:id', agentesController.patchAgent);
  *         required: true
  *         description: ID do agente a ser removido
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       204:
  *         description: Agente removido com sucesso (sem corpo na resposta)

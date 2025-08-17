@@ -36,7 +36,7 @@ async function getAgentes(req, res) {
 
 async function getAgentById(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
 
         if (!id) {
             return handleBadRequest(res, 'ID do agente não fornecido.');
@@ -94,7 +94,7 @@ async function addNewAgent(req, res) {
 
 async function updateAgent(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
         const {nome, dataDeIncorporacao, cargo} = req.body;
 
         if (!id){
@@ -143,7 +143,7 @@ async function updateAgent(req, res) {
 
 async function patchAgent(req, res) {
     try {
-        const id = req.params.id.trim();
+        const id = req.params.id;
         const updates = req.body;
 
         if (!id){
@@ -197,7 +197,7 @@ async function patchAgent(req, res) {
 
 
 async function deleteAgent(req, res) {
-    const id = req.params.id.trim();
+    const id = req.params.id;
 
     if (!id) {
         return handleInvalidId(res, 'ID inválido ou mal formatado');
