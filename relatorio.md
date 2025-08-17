@@ -1,290 +1,226 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 7 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **81.8/100**
+Nota final: **89.2/100**
 
-# Feedback do seu Desafio de API com PostgreSQL e Knex.js 🚔🚀
+# Feedback para faber-studies 🚓✨
 
-Olá, faber-studies! 😊 Primeiro, parabéns pelo esforço e dedicação nessa etapa de persistência com PostgreSQL e Knex.js! Você já tem uma base muito boa, com endpoints funcionando, tratamento de erros e até documentação Swagger — isso é ótimo! 🎉 Além disso, percebi que você conseguiu implementar vários filtros e buscas, além de mensagens customizadas para erros, o que é um diferencial e mostra cuidado com a experiência do usuário da API. Mandou bem! 👏
+Olá, faber-studies! Primeiro, parabéns pelo esforço e pela entrega da sua API REST com Express, PostgreSQL e Knex.js! 🎉 É visível que você estruturou seu projeto de forma modular, com rotas, controllers, repositories e uma boa organização dos arquivos — isso é fundamental para um código escalável e de fácil manutenção. Além disso, você implementou corretamente os endpoints básicos para agentes e casos, incluindo validações, tratamento de erros e status HTTP adequados. 👏👏
 
-Agora, vamos juntos analisar alguns pontos para você destravar ainda mais sua API e alcançar a excelência. Vou te explicar com calma o que observei e como você pode melhorar. Vamos nessa? 🕵️‍♂️🔎
-
----
-
-## 1. Estrutura do Banco e Migrations: Atenção ao Tipo de ID das Tabelas 🏗️
-
-### O que eu percebi?
-
-No seu arquivo de migrations (`db/migrations/20250814234400_solution_migrations.js`), você criou as tabelas `agentes` e `casos` usando o tipo `increments()` para o campo `id`:
-
-```js
-table.increments('id').primary();
-```
-
-Isso significa que seus IDs são **inteiros auto-incrementados** (1, 2, 3, ...), e não UUIDs.
-
-Porém, em vários pontos do seu código, como nos controllers e nas rotas, você está tratando os IDs como se fossem strings UUID, por exemplo:
-
-- No Swagger, o parâmetro `id` é documentado como `string` no formato `uuid`.
-- Nos controllers, você faz `.trim()` e espera IDs no formato UUID.
-- Nos seeds, você não define IDs, deixando o banco gerar, mas espera IDs UUIDs em algumas validações.
-- Nos seus repositórios, as queries usam `.where('id', id)` com `id` sendo uma string UUID.
-
-### Por que isso causa problemas?
-
-Essa **incompatibilidade entre o tipo do ID no banco e o que seu código espera** gera falhas em várias operações, principalmente nas buscas, atualizações e deleções por ID.
-
-Por exemplo, quando você faz:
-
-```js
-const agent = await db('agentes').where('id', id).first();
-```
-
-Se `id` for um UUID (string), mas a coluna no banco é um inteiro, essa query não vai encontrar nada.
-
-Isso explica porque os testes de criação e atualização (que usam IDs) falham: o código espera UUID, mas o banco gera inteiros.
+Também quero destacar que você conseguiu implementar filtros simples para casos por status e agente, o que é um bônus muito legal e demonstra que você está indo além do básico! 🚀
 
 ---
 
-### Como corrigir?
+## Análise detalhada dos pontos para melhorar e sugestões para você crescer ainda mais! 🕵️‍♂️🔍
 
-Você tem duas opções principais — escolha a que fizer mais sentido para seu projeto:
+### 1. Estrutura de Diretórios e Arquivos
 
-#### Opção 1: Usar UUIDs como IDs no banco (recomendado para APIs modernas)
+Sua estrutura está quase perfeita e segue muito bem a arquitetura MVC esperada. Só um ponto que chamou minha atenção:
 
-- Altere a migration para criar o campo `id` como UUID, por exemplo:
+- O arquivo de migration está com o nome `20250814234400_solution_migrations.js.js` (com `.js` repetido no final). Isso pode causar problemas na execução do Knex, pois o Knex espera arquivos `.js` e pode ignorar arquivos com extensão errada.
 
-```js
-table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+**Sugestão:**
+
+Renomeie o arquivo para remover a extensão duplicada, ficando assim:
+
+```
+db/migrations/20250814234400_solution_migrations.js
 ```
 
-> Obs: Para isso, você precisa ter a extensão `pgcrypto` habilitada no seu PostgreSQL para usar `gen_random_uuid()`. Pode criar uma migration para isso:
-
-```js
-exports.up = function(knex) {
-  return knex.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
-};
-```
-
-- Ajuste seus seeds para inserir IDs UUID (ou deixe o banco gerar).
-- Assim, seu código continuará tratando IDs como strings UUID, e o banco vai armazenar UUIDs.
-
-#### Opção 2: Usar IDs inteiros e ajustar seu código para trabalhar com números
-
-- Mantenha a migration como está (`increments()`).
-- Ajuste a documentação Swagger para refletir que o campo `id` é um número (integer), não UUID.
-- Ajuste os controllers e validações para aceitar IDs numéricos (parseInt, etc).
-- Ajuste os seeds para considerar IDs numéricos.
+Esse detalhe pode estar impedindo que suas migrations rodem corretamente, afetando a criação das tabelas `agentes` e `casos`.
 
 ---
 
-### Por que essa questão do tipo de ID é tão importante? 🤔
+### 2. Configuração do Banco de Dados e Migrations
 
-Porque ela impacta diretamente todas as operações CRUD que dependem de IDs para buscar, atualizar e deletar dados. Se o tipo está errado, o banco nunca vai achar o registro, e sua API vai sempre responder com 404 ou erros inesperados.
+Você fez um ótimo trabalho configurando o `knexfile.js` e o arquivo `db/db.js`. A conexão com o banco está bem modularizada, e você usa variáveis de ambiente para proteger suas credenciais, o que é uma ótima prática! 👍
+
+Porém, veja que no seu migration, a tabela `casos` tem o campo `status` com enum apenas `['aberto', 'solucionado']`:
+
+```js
+table.enu('status', ['aberto', 'solucionado']).notNullable();
+```
+
+No seu controller e validações, você aceita também o status `"em andamento"` e `"fechado"` (exemplo no swagger e na validação dos casos), mas o banco não está preparado para isso. Isso pode causar erros ao tentar inserir ou atualizar casos com esses status, porque o banco rejeita valores que não estejam no enum.
+
+**Impacto disso:**
+
+- Você pode estar recebendo erros silenciosos ou falhas ao criar ou atualizar casos com status que não estão na enum do banco.
+- Isso explica por que alguns testes de criação e atualização de agentes e casos falharam.
+
+**Sugestão:**
+
+Atualize sua migration para incluir todos os status que sua API aceita, por exemplo:
+
+```js
+table.enu('status', ['aberto', 'em andamento', 'solucionado', 'fechado']).notNullable();
+```
+
+Depois, rode uma nova migration de alteração ou refaça as migrations (limpando o banco se possível) para atualizar o schema.
 
 ---
 
-## 2. Validação e Tratamento de Erros para IDs
+### 3. Seeds e Relacionamentos
 
-Você está fazendo um ótimo trabalho validando campos e retornando códigos HTTP corretos! 👍 Mas percebi que a validação de IDs UUID está presente no código, porém o banco não usa UUIDs.
-
-Por exemplo, no `casosController.js`:
-
-```js
-const { validUuid } = require('../utils/validators');
-// ...
-```
-
-Mas não vi essa validação sendo usada consistentemente para verificar se o ID recebido é um UUID válido.
-
-Se você decidir manter UUIDs, recomendo usar essa validação para retornar 400 para IDs mal formatados, evitando query no banco com IDs inválidos.
-
----
-
-## 3. Filtros e Busca no Endpoint `/casos` — Atenção à Lógica de Filtragem 🕵️‍♀️
-
-No seu controller `getAllCases`, você faz algo assim:
-
-```js
-let filteredCases = await casosRepository.allCases();
-
-if (agente_id) {
-    filteredCases = await casosRepository.caseByAgentId(agente_id);
-    if (!filteredCases) {
-        return handleNotFound(res, error.message, 'Não encontrado');
-    }
-}
-
-if (status) {
-    if (!validStatus(status)) {
-        return handleBadRequest(...);
-    }
-    filteredCases = await casosRepository.casesByStatus(status);
-    if (!filteredCases) {
-        return handleNotFound(res, 'Não encontrado');
-    }
-}
-
-if (q) {
-    filteredCases = filteredCases.filter(c =>
-        c.titulo.toLowerCase().includes(q.toLowerCase()) ||
-        c.descricao.toLowerCase().includes(q.toLowerCase())
-    );
-}
-```
-
-### Qual o problema?
-
-Você está **substituindo** o resultado a cada filtro, em vez de combinar os filtros para que funcionem juntos.
-
-Por exemplo:
-
-- Se `agente_id` e `status` vierem juntos, o filtro por `status` vai ignorar o filtro por `agente_id`, porque você faz duas queries separadas e sobrescreve `filteredCases`.
-
-### Como melhorar?
-
-Você pode montar uma query dinâmica no repositório para aplicar todos os filtros juntos, algo como:
-
-```js
-async function filteredCases({ agente_id, status, q }) {
-  let query = db('casos');
-
-  if (agente_id) {
-    query = query.where('agente_id', agente_id);
-  }
-
-  if (status) {
-    query = query.where('status', status);
-  }
-
-  if (q) {
-    query = query.andWhere(function() {
-      this.where('titulo', 'ilike', `%${q}%`)
-          .orWhere('descricao', 'ilike', `%${q}%`);
-    });
-  }
-
-  const results = await query.select('*');
-  return results;
-}
-```
-
-Assim, a filtragem acontece no banco, de forma combinada, eficiente e correta.
-
----
-
-## 4. Seeds e Inserção de Dados — Cuidado com IDs para Relacionamentos
-
-No seed `db/seeds/casos.js`, você faz:
+Você fez um ótimo trabalho nos seeds, populando agentes e casos e garantindo que os `agente_id` nos casos sejam válidos, pegando os IDs dos agentes inseridos:
 
 ```js
 const agentes = await knex('agentes').select('id');
 const agentesIds = agentes.map(agente => agente.id);
-
-const casosData = [
-  { titulo: 'Roubo em banco', descricao: 'Assalto à agência central', status: 'aberto', agente_id: agentesIds[0] },
-  // ...
-];
 ```
 
-Se seus IDs forem UUIDs, tudo ok. Mas se forem inteiros, também ok.
+Isso é excelente! 👏
 
-O problema é que, se você mudar o tipo de ID para UUID, deve garantir que os agentes sejam criados com IDs UUID e que o seed de casos use esses IDs corretamente.
-
----
-
-## 5. Arquitetura e Organização do Código — Está Muito Boa! 👏
-
-Sua estrutura está bem organizada, seguindo o padrão MVC com:
-
-- `routes` para rotas,
-- `controllers` para lógica de negócio e validação,
-- `repositories` para acesso ao banco,
-- `db` para configuração do Knex,
-- `utils` para helpers.
-
-Isso é fundamental para manter o projeto escalável e fácil de manter. Continue assim!
+Só fique atento para rodar as migrations com sucesso antes de rodar os seeds, para evitar erros de chave estrangeira.
 
 ---
 
-## 6. Algumas Pequenas Observações de Código
+### 4. Controllers e Repositories de Casos
 
-- No `server.js`, você está usando:
+No controller `casosController.js`, vi que você está importando `agentsById` do repositório de agentes assim:
 
 ```js
-app.use(agentsRouter);
-app.use(casesRouter);
+const { agentsById } = require('../repositories/agentesRepository');
 ```
 
-O ideal é prefixar as rotas para evitar conflitos e melhorar organização:
+Mas no arquivo `agentesRepository.js`, a função está exportada como `agentsById` (plural), certo? Então isso está OK.
+
+Porém, percebi que em algumas funções você usa `id` diretamente sem validar se ele é um número válido. Isso pode causar erros se a rota receber um parâmetro inválido (ex: `/casos/abc`). No seu controller de agentes você trata isso, mas no de casos não vi uma validação explícita para IDs mal formatados.
+
+**Sugestão:**
+
+Adicione validação para IDs nas rotas de casos, retornando 400 quando o ID não for um inteiro válido, assim como fez no controller de agentes. Isso melhora a robustez da API e evita erros inesperados.
+
+---
+
+### 5. Filtros e Busca Full-Text
+
+Você implementou o filtro por status e agente_id na função `filteredCases` do repositório de casos, e isso está bem feito:
 
 ```js
-app.use('/agentes', agentsRouter);
-app.use('/casos', casesRouter);
+if (agente_id) {
+    query = query.where('agente_id', agente_id);
+}
+
+if (status) {
+    query = query.where('status', status);
+}
+
+if (q) {
+    query = query.andWhere(function() {
+        this.where('titulo', 'ilike', `%${q}%`)
+            .orWhere('descricao', 'ilike', `%${q}%`);
+    });
+}
 ```
 
-- No Swagger UI, você configurou:
+Porém, notei que no seu controller `getAllCases` você não está validando corretamente o parâmetro `agente_id` para garantir que é um número válido. Isso pode estar causando falha nos testes de filtragem por agente.
+
+Além disso, no swagger, você espera que o status possa ser `"aberto"`, `"em andamento"` ou `"fechado"`, mas seu banco só permite `"aberto"` e `"solucionado"` (como falamos antes). Isso pode causar inconsistência e falhas.
+
+**Sugestão:**
+
+- Garanta que `agente_id` seja um inteiro válido antes de usar na query.
+- Alinhe os status aceitos no banco e na API para evitar conflitos.
+- Para melhorar a busca por keywords (`q`), você já está usando `ilike` corretamente, parabéns! Só valide o parâmetro para evitar queries desnecessárias.
+
+---
+
+### 6. Ordenação e Filtros no Controller de Agentes
+
+No controller de agentes, você implementou a ordenação pela data de incorporação no GET `/agentes` usando sort:
 
 ```js
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-    explorer: true,
-    swaggerOptions: {
-        url: '/docs',
-    },
-}));
+if (sort) {
+    const order = sort.startsWith('-') ? 'desc' : 'asc';
+    const field = sort.replace('-', '');
+
+    if (field === 'dataDeIncorporacao') {
+        agentes.sort((a, b) => {
+            const dateA = new Date(a.dataDeIncorporacao);
+            const dateB = new Date(b.dataDeIncorporacao);
+
+            return order === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+    }
+}
 ```
 
-O parâmetro `url: '/docs'` pode causar confusão, pois `/docs` é a rota do Swagger UI. Normalmente, o `url` é o caminho para o JSON do Swagger (`/docs.json`). Verifique se a documentação está carregando corretamente.
+Essa ordenação é feita em memória, após buscar todos os agentes do banco. Isso funciona, mas não é eficiente para grandes volumes.
+
+**Sugestão:**
+
+Use o Knex para ordenar diretamente na query, assim:
+
+```js
+async function allAgents({ cargo, sort }) {
+    let query = db('agentes');
+
+    if (cargo) {
+        query = query.where('cargo', 'ilike', cargo);
+    }
+
+    if (sort) {
+        const order = sort.startsWith('-') ? 'desc' : 'asc';
+        const field = sort.replace('-', '');
+        if (field === 'dataDeIncorporacao') {
+            query = query.orderBy(field, order);
+        }
+    }
+
+    const agents = await query.select('*');
+    return agents;
+}
+```
+
+Dessa forma, você delega a ordenação ao banco, que é muito mais rápido e escalável.
 
 ---
 
-## Recursos para você aprofundar e corrigir esses pontos:
+### 7. Mensagens de Erro Customizadas e Validação
 
-- Para configurar banco PostgreSQL com Docker e conectar com Node.js:  
-  http://googleusercontent.com/youtube.com/docker-postgresql-node
+Você fez um ótimo trabalho tratando erros e retornando mensagens claras, usando funções como `handleBadRequest`, `handleNotFound` e `handleCreated`. Isso deixa a API mais amigável para quem consome.
 
-- Para entender e criar migrations com Knex.js:  
-  https://knexjs.org/guide/migrations.html
-
-- Para aprender a construir queries dinâmicas com Knex.js (fundamental para filtros combinados):  
-  https://knexjs.org/guide/query-builder.html
-
-- Para validar dados e tratar erros HTTP corretamente:  
-  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
-
-- Para entender melhor a arquitetura MVC em Node.js:  
-  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+Porém, percebi que algumas mensagens poderiam ser mais específicas, principalmente nas validações de query params e IDs, para garantir que o usuário saiba exatamente o que está errado.
 
 ---
 
-## Resumo Rápido dos Principais Pontos para Melhorar 🚦
+## Recursos para você aprimorar ainda mais seu conhecimento 📚
 
-- ⚠️ **Incompatibilidade entre tipo de ID no banco (inteiro) e no código (UUID):** ajuste a migration para usar UUIDs ou adapte seu código para IDs numéricos. Isso é crucial para o funcionamento correto das operações por ID.
+- Para corrigir e entender melhor a configuração do banco com Docker e Knex, recomendo:  
+  [Configuração de Banco de Dados com Docker e Knex](http://googleusercontent.com/youtube.com/docker-postgresql-node)  
+  [Documentação Oficial do Knex - Migrations](https://knexjs.org/guide/migrations.html)  
+  [Documentação Oficial do Knex - Query Builder](https://knexjs.org/guide/query-builder.html)
 
-- ⚠️ **Filtros no endpoint `/casos` devem ser combinados em uma única query, não sobrescrever resultados:** implemente uma query dinâmica no repositório que aplique todos os filtros de forma conjunta.
+- Para melhorar a arquitetura e organização do seu projeto:  
+  [Arquitetura MVC em Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
 
-- ⚠️ **Valide IDs recebidos para garantir formato correto antes de consultar o banco.**
-
-- ⚠️ **Revise seeds para garantir que os IDs usados nos relacionamentos estão consistentes com o tipo de ID do banco.**
-
-- ✅ Continue com sua excelente organização de pastas e modularização do código! Isso facilita muito a manutenção e evolução do projeto.
-
-- ✅ Mantenha o cuidado com mensagens de erro claras e status HTTP corretos — isso faz toda a diferença para quem consome sua API.
+- Para aprimorar o tratamento de erros e validação de dados em APIs:  
+  [Validação de Dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
+  [HTTP Status 400 - Bad Request](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
+  [HTTP Status 404 - Not Found](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404)
 
 ---
 
-Faber, você está no caminho certo, com uma base sólida e várias funcionalidades implementadas! 💪 Corrigindo esses pontos de tipo de ID e filtragem, sua API vai ficar ainda mais robusta, confiável e pronta para produção.
+## Resumo rápido dos principais pontos para focar:
 
-Se precisar, volte aos recursos indicados para reforçar o entendimento, e não hesite em testar bastante suas queries no banco para garantir que tudo está alinhado. Estou aqui torcendo pelo seu sucesso! 🚀✨
+- 🛠️ Corrija o nome do arquivo de migration para remover o `.js` duplicado.  
+- 🛠️ Atualize o enum do campo `status` na migration para incluir todos os status usados na API (`aberto`, `em andamento`, `solucionado`, `fechado`).  
+- 🛠️ Garanta validação rigorosa dos IDs recebidos nos parâmetros da rota (ex: `agente_id` e `id`), retornando 400 para IDs mal formatados.  
+- 🛠️ Melhore a ordenação e filtros no repositório de agentes usando Knex para fazer ordenação no banco, não em memória.  
+- 🛠️ Ajuste as mensagens de erro para ficarem mais claras e específicas em casos de parâmetros inválidos.  
+- 🛠️ Certifique-se de rodar as migrations antes dos seeds para evitar erros de chave estrangeira.
 
-Continue firme, você está quase lá! 👏👮‍♂️
+---
 
-Abraços do seu Code Buddy! 🤖💙
+Fabers, você está no caminho certo e já entregou uma base sólida! 🚀 Com essas pequenas correções e ajustes, sua API vai ficar ainda mais robusta, performática e alinhada com as melhores práticas. Continue firme, aprendendo e aprimorando — você tem muito talento! 💪✨
+
+Se precisar de ajuda para implementar alguma dessas sugestões, só chamar! Estou aqui para te ajudar a destravar qualquer dúvida. 😉
+
+Um abraço e bons códigos! 👮‍♂️👩‍💻🚓
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
