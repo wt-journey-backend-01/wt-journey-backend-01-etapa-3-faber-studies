@@ -1,44 +1,5 @@
 const db = require('../db/db.js');
-const { handleNotFound } = require('../utils/errorHandler.js');
-/*const agents = [
-    {
-        "id": "401bccf5-cf9e-489d-8412-446cd169a0f1",
-        "nome": "Rommel Carneiro",
-        "dataDeIncorporacao": "1992-10-04",
-        "cargo": "delegado"
-    },
-    {
-        "id": "502bccf5-cf9e-489d-8412-446cd169a0f2",
-        "nome": "Ana Paula Silva",
-        "dataDeIncorporacao": "2005-05-15",
-        "cargo": "investigadora"
-    },
-    {
-        "id": "603bccf5-cf9e-489d-8412-446cd169a0f3",
-        "nome": "Carlos Alberto Souza",
-        "dataDeIncorporacao": "2010-08-20",
-        "cargo": "agente de polícia"
-    },
-    {
-        "id": "704bccf5-cf9e-489d-8412-446cd169a0f4",
-        "nome": "Fernanda Lima",
-        "dataDeIncorporacao": "2018-01-10",
-        "cargo": "perita criminal"
-    },
-    {
-        "id": "805bccf5-cf9e-489d-8412-446cd169a0f5",
-        "nome": "Júlio César Rocha",
-        "dataDeIncorporacao": "2015-07-15",
-        "cargo": "agente de polícia"
-    },
-    {
-        "id": "906bccf5-cf9e-489d-8412-446cd169a0f6",
-        "nome": "Vanessa Martins",
-        "dataDeIncorporacao": "2012-04-03",
-        "cargo": "delegada"
-    }
-];
-*/
+
 
 async function allAgents() {
     try {
