@@ -5,27 +5,9 @@ const {validDate} = require('../utils/validators.js');
 
 async function getAgentes(req, res) {
     try {
-        const {cargo, sort} = req.query;
-        let agentes = await agentesRepository.allAgents();
-        if (cargo) {
-            agentes = agentes.filter(a => a.cargo.toLowerCase() === cargo.toLowerCase());
-        }
-
-        if (sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
-            const field = sort.replace('-', '');
-
-            if (field === 'dataDeIncorporacao') {
-                agentes.sort((a, b) => {
-                    const dateA = new Date(a.dataDeIncorporacao);
-                    const dateB = new Date(b.dataDeIncorporacao);
-
-                    return order === 'asc' ? dateA - dateB : dateB - dateA;
-                });
-            }
-        }
-
-        res.status(200).json(agentes);
+        const requested = req.query;
+        const result = await agentesRepository.allAgentsOrFiltered(requested);
+        res.status(200).json(result);
 
     } catch (error) {
         return handleBadRequest(res, error.message || 'Erro ao buscar agentes');
@@ -38,8 +20,8 @@ async function getAgentById(req, res) {
     try {
         const id = req.params.id;
 
-        if (!id) {
-            return handleBadRequest(res, 'ID do agente não fornecido.');
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
         }
 
         const agent = await agentesRepository.agentsById(id);
@@ -97,8 +79,8 @@ async function updateAgent(req, res) {
         const id = req.params.id;
         const {nome, dataDeIncorporacao, cargo} = req.body;
 
-        if (!id){
-            return handleBadRequest(res, 'Forneça o ID');
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
         }
 
         const agentExists= await agentesRepository.agentsById(id);
@@ -146,8 +128,8 @@ async function patchAgent(req, res) {
         const id = req.params.id;
         const updates = req.body;
 
-        if (!id){
-            return handleBadRequest(res, 'Forneça o ID');
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
         }
 
         const agentExists= await agentesRepository.agentsById(id);
@@ -199,8 +181,8 @@ async function patchAgent(req, res) {
 async function deleteAgent(req, res) {
     const id = req.params.id;
 
-    if (!id) {
-        return handleInvalidId(res, 'ID inválido ou mal formatado');
+    if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+        return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
     }
 
     const agentExists = await agentesRepository.agentsById(id);

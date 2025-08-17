@@ -1,17 +1,24 @@
 const db = require('../db/db.js');
 
 
-async function allAgents() {
-    try {
-        const agents = await db('agentes').select('*');
-        console.log("Agents fetched successfully:", agents);
-        return agents;
-    } catch (error) {
-        console.error("Error fetching agents:", error);
-        throw new Error('Não foi possível buscar os itens.');
-    }
-}
+async function allAgentsOrFiltered({cargo, sort}) {
+    let query = db('agentes');
 
+    if  (cargo) {
+        query = query.where('cargo', 'ilike', cargo);
+    }
+
+    if (sort) {
+        const order = sort.startsWith('-') ? 'desc' : 'asc';
+        const field = sort.replace('-', '');
+        if (field === 'dataDeIncorporacao') {
+            query = query.orderBy(field, order);
+        }
+    }
+
+    const agents = await query.select('*');
+    return agents;
+}
 
 async function agentsById(id) {
     try {
@@ -68,7 +75,7 @@ async function deleteAgentOnRepo(id) {
 }
 
 module.exports = {
-    allAgents,
+    allAgentsOrFiltered,
     agentsById,
     addNewAgentToRepo,
     updateAgentOnRepo,

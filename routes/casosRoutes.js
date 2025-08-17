@@ -29,7 +29,7 @@ const casosController = require('../controllers/casosController.js');
  *         schema:
  *           type: string
  *         required: false
- *         description: Filtra os casos pelo status (aberto, em andamento ou fechado)
+ *         description: Filtra os casos pelo status (aberto ou solucionado)
  *         example: aberto
  *       - in: query
  *         name: q
@@ -98,7 +98,7 @@ router.get('/casos', casosController.getAllCases);
  *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *                   status:
  *                     type: string
- *                     example: fechado
+ *                     example: aberto
  *                   agente_id:
  *                     type: integer
  *                     example: 5
@@ -174,7 +174,7 @@ router.get('/casos/:id/agente', casosController.getAgentByCase)
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: em andamento
+ *                 example: solucionado
  *               agente_id: 
  *                 type: integer
  *                 example: 7          
@@ -222,7 +222,7 @@ router.post('/casos', casosController.addNewCase);
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: em andamento
+ *                 example: solucionado
  *               agente_id: 
  *                 type: integer
  *                 example: 8
@@ -264,7 +264,7 @@ router.put('/casos/:id', casosController.updateCase);
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: em andamento
+ *                 example: solucionado
  *               agente_id: 
  *                 type: integer
  *                 example: 9

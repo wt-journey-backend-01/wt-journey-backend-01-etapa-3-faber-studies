@@ -8,6 +8,10 @@ const {validStatus, validStatusesList } = require('../utils/validators');
 async function getAllCases(req, res){
     try {
         let {agente_id, status, q} = req.query;
+        
+        if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
 
         if (status) {
             status = status.toString().trim();
@@ -37,6 +41,10 @@ async function getAgentByCase(req, res) {
     try {
         const id = req.params.id;
 
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
+
         const case_ = await casosRepository.caseById(id);
         if(!case_) {
             return handleNotFound(res, 'Caso não encontrado');
@@ -55,6 +63,10 @@ async function getCaseById(req, res){
     try {
         const id = req.params.id;
 
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
+
         const case_= await casosRepository.caseById(id);
         if (!case_) {
             return handleNotFound(res, 'Caso não encontrado');
@@ -72,21 +84,29 @@ async function addNewCase(req, res){
             return handleBadRequest(res, 'Todos os campos precisam ser preenchidos!');
         }
 
+        if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
+
         const agentExists = await agentsById(agente_id);
         if (!agentExists) {
             return handleNotFound(res, 'Agente não encontrado');
         }
+
          const isValidStatus = validStatus(status);
         if (!isValidStatus) {
             return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
         }   
+
         const newCase = {
             titulo,
             descricao,
             status: status.toLowerCase(),
             agente_id
-        };  
+        }; 
+
         const createdCase = await casosRepository.addNewCaseOnRepo(newCase);
+
         if (!createdCase) {
             return handleBadRequest(res, 'Erro ao cadastrar caso');
         }
@@ -103,6 +123,9 @@ async function updateCase(req, res) {
         const id = req.params.id;
         const updates = req.body;
 
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
 
         const caseExists = await casosRepository.caseById(id);
         if (!caseExists) {
@@ -127,6 +150,10 @@ async function updateCase(req, res) {
             return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
         }
 
+
+        if (!updates.agente_id || isNaN(Number(updates.agente_id)) || !Number.isInteger(Number(updates.agente_id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
 
         const agentExists = await agentsById(updates.agente_id);
 
@@ -162,6 +189,10 @@ async function patchCase(req, res) {
         const id = req.params.id;
         const updates = req.body;
 
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
+
         const caseExists = await casosRepository.caseById(id);
         if (!caseExists) {
             return handleNotFound(res, 'Caso não encontrado!');
@@ -188,13 +219,20 @@ async function patchCase(req, res) {
                 return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
             }
         }
+
+        
         if (updates.agente_id) {
+            if (!updates.agente_id || isNaN(Number(updates.agente_id)) || !Number.isInteger(Number(updates.agente_id))) {
+                return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+            }
             const agentExists = await agentsById(updates.agente_id);
             if (!agentExists) {
                 return handleNotFound(res, 'Agente não encontrado');
             }
         }
+
         const update = await casosRepository.patchCaseOnRepo(id, updates);
+
         if (!update) {
             return handleNotFound(res, 'Caso não encontrado');
         }
@@ -207,6 +245,10 @@ async function patchCase(req, res) {
 async function deleteCase(req, res) {
     try {
         const id = req.params.id;
+
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
 
         const caseExists = await casosRepository.caseById(id);
         if (!caseExists) {
