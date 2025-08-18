@@ -5,8 +5,14 @@ const {validDate} = require('../utils/validators.js');
 
 async function getAgentes(req, res) {
     try {
-        const requested = req.query;
-        const result = await agentesRepository.allAgentsOrFiltered(requested);
+        let {cargo, sort} = req.query;
+        if (sort) {
+            sort = sort.trim();
+        }
+        if (cargo) {
+            cargo=cargo.trim();
+        }
+        const result = await agentesRepository.allAgentsOrFiltered({cargo, sort});
         res.status(200).json(result);
 
     } catch (error) {
@@ -34,6 +40,26 @@ async function getAgentById(req, res) {
     }
 }
     
+async function getCasesByAgent(req, res) {
+    try {
+        const id = req.params.id;
+
+        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        }
+
+        const cases = await agentesRepository.casesByAgent(id);
+
+        if (cases.length == 0) {
+            return handleNotFound(res, "Nenhum caso encontrado para esse agente.");
+        }
+        
+        res.status(200).json(cases);
+
+    } catch (error) {
+        return handleBadRequest(res, error.message || 'Erro ao procurar casos atribuidos a um Agente');
+    }    
+}
 
 
 async function addNewAgent(req, res) {
@@ -204,6 +230,7 @@ async function deleteAgent(req, res) {
 module.exports = {
     getAgentes,
     getAgentById,
+    getCasesByAgent,
     addNewAgent,
     updateAgent,
     patchAgent,

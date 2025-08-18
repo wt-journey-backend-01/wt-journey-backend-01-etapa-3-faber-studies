@@ -9,9 +9,12 @@ async function getAllCases(req, res){
     try {
         let {agente_id, status, q} = req.query;
         
-        if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
-            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        if (agente_id) {
+            if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
+                return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+            }
         }
+        
 
         if (status) {
             status = status.toString().trim();
@@ -151,15 +154,17 @@ async function updateCase(req, res) {
         }
 
 
-        if (!updates.agente_id || isNaN(Number(updates.agente_id)) || !Number.isInteger(Number(updates.agente_id))) {
-            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
-        }
+        if (updates.agente_id) {
+            if (!updates.agente_id || isNaN(Number(updates.agente_id)) || !Number.isInteger(Number(updates.agente_id))) {
+                return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+            }
+            const agentExists = await agentsById(updates.agente_id);
 
-        const agentExists = await agentsById(updates.agente_id);
-
-        if (!agentExists) {
-            return handleNotFound(res, 'Agente não encontrado');
+            if (!agentExists) {
+                return handleNotFound(res, 'Agente não encontrado');
+            }
         }
+         
         
         if (updates.id) {
             return handleBadRequest(res, 'ID não pode ser alterado!');

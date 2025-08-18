@@ -32,6 +32,19 @@ async function agentsById(id) {
     } 
 }
 
+async function casesByAgent(id) {
+    try {
+        const result = await db('agentes')
+        .select('casos.*')
+        .join('casos', 'agentes.id','=','casos.agente_id')
+        .where('agentes.id', id);
+
+        return result;
+    } catch (error) {
+        throw new Error('Não foi possível buscar os casos atribuídos ao agente.');
+    }
+}
+
 async function addNewAgentToRepo(newAgent) {
     try {
         const [createdAgent] = await db('agentes').insert(newAgent).returning('*');
@@ -77,6 +90,7 @@ async function deleteAgentOnRepo(id) {
 module.exports = {
     allAgentsOrFiltered,
     agentsById,
+    casesByAgent,
     addNewAgentToRepo,
     updateAgentOnRepo,
     patchAgentOnRepo,

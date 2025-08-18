@@ -58,7 +58,6 @@ const agentesController = require('../controllers/agentesController.js');
  */
 router.get('/agentes', agentesController.getAgentes);
 
-
 /**
  * @swagger
  * /agentes/{id}:
@@ -116,6 +115,70 @@ router.get('/agentes', agentesController.getAgentes);
  *                   example: Agente não encontrado
  */
 router.get('/agentes/:id', agentesController.getAgentById);
+
+
+/**
+ * @swagger
+ * /agentes/{id}/casos:
+ *   get:
+ *     summary: Lista todos os casos atribuídos a um agente específico
+ *     tags: [Agentes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do agente
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Casos do agente retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 10
+ *                   titulo:
+ *                     type: string
+ *                     example: Roubo de veículo
+ *                   descricao:
+ *                     type: string
+ *                     example: Veículo furtado em via pública.
+ *                   status:
+ *                     type: string
+ *                     enum: [aberto, solucionado]
+ *                     example: aberto
+ *                   agente_id:
+ *                     type: integer
+ *                     example: 1
+ *       400:
+ *         description: ID do agente inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID inválido. O ID deve ser um número inteiro.
+ *       404:
+ *         description: Nenhum caso encontrado para este agente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Nenhum caso encontrado para este agente.
+ */
+router.get('/agentes/:id/casos', agentesController.getCasesByAgent);
 
 /**
  * @swagger

@@ -18,7 +18,7 @@ app.get('/docs.json', (req, res) => {
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
     explorer: true,
     swaggerOptions: {
-        url: '/docs',
+        url: '/docs.json',
     },
 }));
 
