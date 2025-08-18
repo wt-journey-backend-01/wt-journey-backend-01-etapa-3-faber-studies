@@ -1,166 +1,273 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **88.2/100**
+Nota final: **89.2/100**
 
-Olá, faber-studies! 👋🚓
+# Feedback para você, faber-studies 🚓✨
 
-Primeiro, parabéns pelo empenho e pelo resultado geral do seu projeto! 🎉 Você fez um ótimo trabalho migrando sua API para usar PostgreSQL com Knex.js, mantendo uma arquitetura modular e implementando validações e tratamento de erros. Isso mostra maturidade e atenção aos detalhes, que são fundamentais para APIs robustas. Além disso, percebi que você conseguiu implementar o filtro simples por agente nos casos, que é um recurso bônus valioso! 👏👏
+Olá! Primeiramente, parabéns pelo esforço e dedicação em migrar toda sua API para um banco de dados PostgreSQL usando Knex.js! 🎉 Isso não é trivial, e seu projeto está bem estruturado, com rotas, controllers e repositories separados, o que é uma ótima prática para manter o código organizado e escalável. Também notei que você implementou validações e tratamento de erros com cuidado — isso faz toda a diferença para uma API robusta! 👏
 
-Agora, vamos juntos entender alguns pontos que podem ser melhorados para você alcançar a excelência total nessa etapa. Vou explicar com calma e mostrar trechos do seu código para que fique bem claro. Bora lá? 🚀
+Além disso, você conseguiu entregar funcionalidades bônus importantes, como a filtragem simples de casos por status e agente, mostrando um domínio maior do desafio. Isso é excelente! 🚀
 
 ---
 
-## 1. Problema com o Endpoint `/casos` e Filtros (Status, Pesquisa, Agente)
+## Vamos analisar juntos onde podemos melhorar para deixar seu projeto ainda mais sólido? 🕵️‍♂️
 
-Você mencionou que o teste de listar todos os casos e alguns filtros relacionados falharam. Ao analisar seu código no controller `casosController.js`, notei o seguinte trecho na função `getAllCases`:
+### 1. Estrutura de Diretórios e Organização do Projeto
 
-```js
-async function getAllCases(req, res){
-    try {
-        let {agente_id, status, q} = req.query;
-        
-        if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
-            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
-        }
+Sua estrutura está muito próxima do esperado, o que é ótimo! Só reforçando, para garantir que tudo funcione perfeitamente, o projeto deve seguir essa organização:
 
-        // ... resto do código
+```
+📦 SEU-REPOSITÓRIO
+│
+├── package.json
+├── server.js
+├── knexfile.js
+├── INSTRUCTIONS.md
+│
+├── db/
+│   ├── migrations/
+│   ├── seeds/
+│   └── db.js
+│
+├── routes/
+│   ├── agentesRoutes.js
+│   └── casosRoutes.js
+│
+├── controllers/
+│   ├── agentesController.js
+│   └── casosController.js
+│
+├── repositories/
+│   ├── agentesRepository.js
+│   └── casosRepository.js
+│
+└── utils/
+    └── errorHandler.js
 ```
 
-Aqui está o ponto crítico: você está validando `agente_id` **antes de checar se ele foi enviado**. O problema é que o parâmetro `agente_id` é **opcional** para o filtro, conforme o Swagger e o enunciado. Se o usuário não passar `agente_id` na query, seu código já retorna erro de "ID inválido", pois `!agente_id` será `true`.
-
-Ou seja, você está forçando o parâmetro obrigatório quando ele deveria ser opcional. Isso causa falha na listagem geral de casos, que deve funcionar mesmo sem filtros.
-
-### Como corrigir?
-
-Você deve validar o `agente_id` **somente se ele estiver presente na query**. Algo assim:
-
-```js
-if (agente_id !== undefined) {
-    if (isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
-        return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
-    }
-}
-```
-
-Isso garante que, se o cliente não enviar `agente_id`, o filtro será ignorado e a listagem geral funcionará.
+Você já está seguindo isso, parabéns! Isso ajuda muito na manutenção e escalabilidade do código. 👍
 
 ---
 
-Além disso, notei que você faz algo semelhante para o filtro `status` e para `q` (keyword search), que está correto, mas o erro no `agente_id` bloqueia toda a funcionalidade.
+### 2. Sobre as falhas na criação e atualização completa de agentes (POST e PUT em `/agentes`)
 
-Este problema afeta também os filtros por status e por palavras-chave, porque, se o filtro por agente falha, o endpoint inteiro não funciona como esperado.
+Percebi que os testes de criação (`POST /agentes`) e atualização completa (`PUT /agentes/:id`) de agentes não passaram, o que indica que essas funcionalidades podem estar com algum problema.
 
----
+🔎 **Analisando o `agentesController.js`:**
 
-## 2. Endpoint para Buscar o Agente Responsável por um Caso (`/casos/:id/agente`)
+- No método `addNewAgent`, você faz uma validação correta dos campos e da data, e chama o repositório para inserir o agente. Isso está ótimo.
 
-Você implementou a função `getAgentByCase` assim:
+- No método `updateAgent` (PUT), você faz várias validações, incluindo checar se o agente existe, validar campos e formato da data, e chama o repositório para atualizar.
+
+Porém, ao olhar para o `agentesRepository.js`, notei que as funções `updateAgentOnRepo` e `patchAgentOnRepo` têm um detalhe importante:
 
 ```js
-async function getAgentByCase(req, res) {
+async function updateAgentOnRepo(id, newData) {
     try {
-        const id = req.params.id;
-
-        if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
-            return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
+        const [updatedAgent] = await db('agentes').where('id', id).update(newData).returning('*');
+        if (updatedAgent) {
+            return updatedAgent;
         }
-
-        const case_ = await casosRepository.caseById(id);
-        if(!case_) {
-            return handleNotFound(res, 'Caso não encontrado');
-        }
-
-        const agent = await casosRepository.agentByCase(id);
-
-        return res.status(200).json(agent);
     } catch (error) {
-        return handleBadRequest(res, error.message || 'Erro ao buscar agente pelo caso');
+        throw new Error('Não foi possível atualizar o agente.');
     }
-    
 }
 ```
 
-Aqui, o uso da função `agentByCase` do repositório parece correto. Porém, notei que no arquivo `repositories/casosRepository.js`, a função `agentByCase` está exportada normalmente, mas no controller você faz:
+Aqui, se `updatedAgent` for `undefined` (por exemplo, se o ID não existir), a função não retorna nada explicitamente, o que pode gerar problemas na controller. É importante garantir que sempre retorne `null` ou algo explícito quando não encontrar o agente para atualizar.
+
+**Sugestão de ajuste:**
+
+```js
+async function updateAgentOnRepo(id, newData) {
+    try {
+        const [updatedAgent] = await db('agentes').where('id', id).update(newData).returning('*');
+        return updatedAgent || null;
+    } catch (error) {
+        throw new Error('Não foi possível atualizar o agente.');
+    }
+}
+```
+
+Mesma coisa para `patchAgentOnRepo`.
+
+---
+
+### 3. Falha na busca de casos do agente e busca do agente responsável por caso (endpoints relacionados a `/agentes/:id/casos` e `/casos/:id/agente`)
+
+Você não passou em alguns testes bônus que envolvem:
+
+- Buscar casos atribuídos a um agente específico
+- Buscar agente responsável por um caso
+- Filtrar casos por keywords no título e descrição
+- Ordenar agentes por data de incorporação (com sort asc e desc)
+- Mensagens de erro customizadas para IDs inválidos
+
+Vamos destrinchar esses pontos:
+
+#### a) Busca dos casos de um agente (`getCasesByAgent` no `agentesController.js`)
+
+Seu controller chama o repositório `casesByAgent(id)`:
+
+```js
+async function casesByAgent(id) {
+    try {
+        const result = await db('agentes')
+        .select('casos.*')
+        .join('casos', 'agentes.id','=','casos.agente_id')
+        .where('agentes.id', id);
+
+        return result;
+    } catch (error) {
+        throw new Error('Não foi possível buscar os casos atribuídos ao agente.');
+    }
+}
+```
+
+Esse código parece correto, mas um ponto que pode estar causando falha é a ausência de tratamento para o caso em que o agente não existe. Se o agente não existir, a query ainda pode retornar um array vazio, mas talvez o teste espere um erro 404 com mensagem específica.
+
+**Sugestão:** No controller, antes de buscar os casos, confirme se o agente existe, para retornar um 404 mais apropriado:
+
+```js
+const agentExists = await agentesRepository.agentsById(id);
+if (!agentExists) {
+    return handleNotFound(res, 'Agente não encontrado');
+}
+const cases = await agentesRepository.casesByAgent(id);
+if (cases.length === 0) {
+    return handleNotFound(res, "Nenhum caso encontrado para esse agente.");
+}
+res.status(200).json(cases);
+```
+
+Isso melhora a clareza do erro para o cliente.
+
+---
+
+#### b) Busca do agente responsável por um caso (`getAgentByCase` no `casosController.js`)
+
+Você está usando o método `agentByCase(id)` do repository, que faz:
+
+```js
+async function agentByCase(caseId) {
+    try {
+        const result = await db('casos')
+        .select('agentes.*')
+        .join('agentes', 'casos.agente_id','=','agentes.id')
+        .where('casos.id', caseId)
+        .first();
+
+        if (!result) {
+            return null;
+        }
+
+        return result;
+    } catch (error) {
+        throw new Error('Não foi possível buscar o agente responsável pelo caso.');
+    }
+}
+```
+
+Isso está correto.
+
+No controller, porém, você busca o caso com `caseById(id)` para verificar se existe, mas para buscar o agente você chama `casosRepository.agentByCase(id)`.
+
+O problema é que no controller você está importando `agentsById` do `agentesRepository`:
 
 ```js
 const { agentsById } = require('../repositories/agentesRepository');
 ```
 
-E não está importando `agentByCase` explicitamente, o que está certo, porque ela está no `casosRepository`.
+Mas na função `addNewCase` você chama `agentsById`, e no `getAgentByCase` você chama `casosRepository.agentByCase(id)`.
 
-Porém, no controller você chama `await casosRepository.agentByCase(id);` — isso está correto, mas para garantir que o join funcione, é importante verificar se a query está correta.
+O problema é que você está importando `agentsById` com "s" no meio, mas no arquivo `agentesRepository.js` a função é `agentsById` (com "s")? Sim, está correto.
 
-Na sua query do repositório:
+Só que no controller você chama `agentsById` para verificar se o agente existe, mas no `getAgentByCase` você não verifica se o agente existe antes de retornar, apenas retorna o resultado do join.
+
+**Sugestão:** No controller `getAgentByCase`, verifique se o agente existe (resultado do join). Se não existir, retorne 404 com mensagem apropriada:
 
 ```js
-const result = await db('casos')
-    .select('agentes.*')
-    .join('agentes', 'casos.agente_id','=','agentes.id')
-    .where('casos.id', caseId)
-    .first();
+const agent = await casosRepository.agentByCase(id);
+if (!agent) {
+    return handleNotFound(res, 'Caso ou agente não encontrado');
+}
+return res.status(200).json(agent);
 ```
-
-Isso está ótimo, mas se o banco não tiver dados ou se a tabela `agentes` estiver vazia, pode retornar `null`. Certifique-se de que as migrations e seeds foram executadas corretamente para popular as tabelas, pois caso contrário, essa consulta falhará.
 
 ---
 
-## 3. Filtros Complexos em `/agentes` (Ordenação por dataDeIncorporacao)
+#### c) Filtragem por keywords no título e descrição dos casos (`filteredCases` no `casosRepository.js`)
 
-Você recebeu um feedback de que a filtragem por data de incorporação com ordenação ascendente e descendente não passou. Olhando para seu repositório `agentesRepository.js`:
+Seu método está assim:
 
 ```js
-async function allAgentsOrFiltered({cargo, sort}) {
-    let query = db('agentes');
-
-    if  (cargo) {
-        query = query.where('cargo', 'ilike', cargo);
-    }
-
-    if (sort) {
-        const order = sort.startsWith('-') ? 'desc' : 'asc';
-        const field = sort.replace('-', '');
-        if (field === 'dataDeIncorporacao') {
-            query = query.orderBy(field, order);
-        }
-    }
-
-    const agents = await query.select('*');
-    return agents;
+if (q) {
+    query = query.andWhere(function() {
+        this.where('titulo', 'ilike', `%${q}%`)
+            .orWhere('descricao', 'ilike', `%${q}%`);
+    });
 }
 ```
 
-Esse código está correto para ordenar pelo campo `dataDeIncorporacao` com sinalização `-` para desc e sem para asc.
+Isso está correto para fazer uma busca "full-text" simples usando `ILIKE`. Porém, certifique-se que o parâmetro `q` está sendo passado corretamente na query e tratado no controller.
 
-Porém, no controller `agentesController.js`, na função `getAgentes`, você passa o objeto `req.query` diretamente para o repositório:
+---
+
+#### d) Ordenação dos agentes por data de incorporação
+
+No seu repositório `agentesRepository.js`, o método `allAgentsOrFiltered` trata o parâmetro `sort` assim:
 
 ```js
-const requested = req.query;
-const result = await agentesRepository.allAgentsOrFiltered(requested);
+if (sort) {
+    const order = sort.startsWith('-') ? 'desc' : 'asc';
+    const field = sort.replace('-', '');
+    if (field === 'dataDeIncorporacao') {
+        query = query.orderBy(field, order);
+    }
+}
 ```
 
-Aqui, o problema pode estar na forma como o parâmetro `sort` é enviado pelo cliente. Certifique-se que no Swagger e na documentação está claro que o parâmetro `sort` deve ser exatamente `dataDeIncorporacao` ou `-dataDeIncorporacao`.
+Isso está correto e deveria funcionar para ordenar asc e desc.
 
-Se o parâmetro vier com letras maiúsculas ou espaços, seu filtro não funcionará. Você pode melhorar essa parte normalizando o parâmetro, por exemplo:
+Porém, os testes bônus falharam nessa parte, o que pode indicar que o parâmetro `sort` está chegando com espaços ou em outro formato.
+
+No controller `getAgentes`, você já faz um trim:
 
 ```js
-let { cargo, sort } = req.query;
-
 if (sort) {
     sort = sort.trim();
 }
 ```
 
-Assim, evita erros por espaços extras.
+Então está ok.
+
+**Possível causa:** O problema pode estar no fato de que você só aceita ordenar por `dataDeIncorporacao`. Se a API receber um campo `sort` diferente, você não ordena, o que pode estar certo, mas talvez o teste espere um erro ou mensagem personalizada para sort inválido.
+
+**Sugestão:** Você pode melhorar o tratamento para sort inválido, retornando um erro 400 com mensagem amigável, assim:
+
+```js
+if (sort) {
+    const order = sort.startsWith('-') ? 'desc' : 'asc';
+    const field = sort.replace('-', '');
+    const allowedSortFields = ['dataDeIncorporacao'];
+    if (!allowedSortFields.includes(field)) {
+        return handleBadRequest(res, `Campo de ordenação inválido. Use: ${allowedSortFields.join(', ')}`);
+    }
+    query = query.orderBy(field, order);
+}
+```
+
+Assim o cliente sabe o que pode usar.
 
 ---
 
-## 4. Validação de IDs em Diferentes Endpoints
+### 4. Mensagens de erro customizadas para IDs inválidos
 
-Notei que em vários lugares você valida IDs com código parecido:
+Percebi que você já faz validação para IDs em vários controllers, por exemplo:
 
 ```js
 if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
@@ -168,101 +275,95 @@ if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
 }
 ```
 
-Isso é ótimo para garantir que o ID seja um inteiro válido.
+Isso é ótimo! Mas os testes bônus falharam em mensagens customizadas para argumentos inválidos.
 
-Porém, em `getAllCases`, você fez:
+**Possível motivo:** Em alguns controllers, a validação está repetida e talvez a mensagem não esteja exatamente igual ao esperado pelo teste.
+
+**Sugestão:** Centralize essa validação em uma função utilitária para garantir consistência nas mensagens, e use-a em todos os controllers.
+
+Exemplo:
 
 ```js
-if (!agente_id || isNaN(Number(agente_id)) || !Number.isInteger(Number(agente_id))) {
+function validateId(id) {
+    if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+        return false;
+    }
+    return true;
+}
+
+// No controller
+if (!validateId(id)) {
     return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
 }
 ```
 
-Como já mencionei, isso força o parâmetro `agente_id` a ser obrigatório, o que não é o caso.
-
-Recomendo criar uma função utilitária para validar IDs opcionais, que só retorna erro se o parâmetro existir e for inválido. Isso evita repetição e erros.
+Isso ajuda a manter mensagens uniformes.
 
 ---
 
-## 5. Migrations e Seeds
+### 5. Pequenas melhorias gerais e boas práticas
 
-Você fez um ótimo trabalho criando as migrations para as tabelas `agentes` e `casos` com os tipos corretos e relacionamento `agente_id` com chave estrangeira, com `onDelete('CASCADE')`. Isso é excelente! 👏
+- No seu arquivo `knexfile.js`, a configuração está correta, usando variáveis de ambiente para conexão com o banco. Muito bom!
 
-Se os testes de criação e atualização de agentes falharam, algo que vale a pena checar é se as migrations foram realmente executadas antes dos testes, e se os seeds estão populando as tabelas corretamente.
+- No arquivo `db/db.js`, você importa a configuração correta conforme o ambiente, isso é ótimo para desenvolvimento e CI.
 
-No seu `INSTRUCTIONS.md`, você tem os passos corretos para rodar o container, executar migrations e seeds. Garanta que:
+- Em `package.json`, o script `"db:reset"` está bem configurado para rodar rollback, migrations e seeds, facilitando testes locais.
 
-- O arquivo `.env` está configurado com as variáveis certas.
-- O container do banco está rodando e acessível.
-- As migrations e seeds foram executadas sem erros.
-
-Se o banco não estiver populado, o endpoint de listagem e atualização falhará.
+- Nos seus seeds, você está populando agentes e casos corretamente, incluindo a associação entre eles, o que é ótimo para testes.
 
 ---
 
-## 6. Pequeno Detalhe no Swagger UI
+## Recursos recomendados para você 🚀
 
-No seu `server.js`, você configurou o Swagger UI assim:
+Para te ajudar a aprimorar esses pontos, aqui vão alguns recursos que vão te ajudar a entender melhor e corrigir:
 
-```js
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-    explorer: true,
-    swaggerOptions: {
-        url: '/docs',
-    },
-}));
-```
-
-O parâmetro `swaggerOptions.url` apontando para `/docs` pode causar um loop, porque `/docs` é a própria UI. Geralmente, esse parâmetro deve apontar para o JSON de documentação, que você expõe em `/docs.json`.
-
-Recomendo trocar para:
-
-```js
-swaggerOptions: {
-    url: '/docs.json',
-}
-```
-
-Assim, o Swagger UI carrega o JSON correto.
-
----
-
-## Recursos para Você Aprofundar e Corrigir
-
-- Para entender melhor a configuração do banco, migrations e seeds, recomendo fortemente este vídeo:  
+- **Configuração de Banco de Dados com Docker e Knex:**  
   http://googleusercontent.com/youtube.com/docker-postgresql-node  
-  e a documentação oficial do Knex para migrations:  
   https://knexjs.org/guide/migrations.html
 
-- Para refinar o uso do Query Builder e filtros, este guia é excelente:  
+- **Query Builder do Knex:**  
   https://knexjs.org/guide/query-builder.html
 
-- Para validar e tratar erros HTTP de forma correta, veja este vídeo sobre status codes e validação em APIs Node.js:  
+- **Validação de Dados e Tratamento de Erros na API:**  
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
   https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
 
-- Para organizar seu código de forma modular e com arquitetura MVC, que você já está fazendo bem, mas pode evoluir ainda mais:  
+- **Arquitetura MVC para Node.js:**  
   https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
----
-
-## Resumo Rápido dos Pontos para Focar
-
-- ⚠️ Ajustar validação do parâmetro `agente_id` em `/casos` para ser opcional e validar apenas se presente.  
-- ⚠️ Verificar se as migrations e seeds foram executadas corretamente para garantir dados no banco.  
-- ⚠️ Normalizar parâmetros de query (ex: `sort`) para evitar problemas com espaços ou maiúsculas.  
-- ⚠️ Criar funções utilitárias para validação de IDs opcionais para evitar repetição e erros.  
-- ⚠️ Corrigir configuração do Swagger UI para apontar para `/docs.json` em vez de `/docs`.  
-- ✅ Manter a organização modular que você já fez, com controllers, repositories e rotas.  
-- ✅ Parabéns pelo uso correto de joins e pelo relacionamento entre tabelas nas queries do Knex!  
-- ✅ Excelente tratamento de erros e status codes na API, isso é fundamental!  
+- **HTTP Status Codes e boas práticas:**  
+  https://youtu.be/RSZHvQomeKE
 
 ---
 
-Faber, você está muito no caminho certo, com código limpo, modular e bem estruturado! 💪✨ Corrigindo esses detalhes que apontamos, sua API vai ficar tinindo e pronta para produção! Continue explorando, testando e aprimorando. Se precisar, volte aos recursos que indiquei para reforçar conceitos e técnicas.
+## Resumo rápido dos pontos para focar:
 
-Conte comigo para o que precisar! 🚀👨‍💻👩‍💻
+- ✅ Ajustar `updateAgentOnRepo` e `patchAgentOnRepo` para sempre retornar `null` quando o agente não for encontrado, evitando retornos `undefined`.
 
-Abraços e sucesso! 🎯🚓
+- ✅ No controller de casos do agente (`getCasesByAgent`), verificar se o agente existe antes de buscar os casos para retornar 404 apropriado.
+
+- ✅ No controller de agente por caso (`getAgentByCase`), verificar se o agente existe (resultado do join) antes de retornar, para evitar retornar `null` silenciosamente.
+
+- ✅ Implementar validação e mensagens customizadas para parâmetros `sort` inválidos na listagem de agentes.
+
+- ✅ Centralizar validação de IDs em função utilitária para garantir mensagens de erro uniformes e evitar repetição.
+
+- ✅ Verificar se o parâmetro `q` para busca por keywords está sendo tratado e passado corretamente para o repositório.
+
+---
+
+## Conclusão 🌟
+
+Você já está com uma base muito boa, com código organizado e funcionalidades importantes funcionando! As falhas que apareceram são detalhes que, uma vez corrigidos, vão deixar sua API muito mais robusta e alinhada com as melhores práticas.
+
+Continue assim, sempre buscando entender a fundo o que cada parte do código faz e como ela impacta o funcionamento geral. Isso vai te tornar um desenvolvedor cada vez mais afiado! 💪
+
+Se precisar, volte aos recursos que indiquei para reforçar conceitos de Knex, validação e tratamento de erros, que são cruciais para APIs profissionais.
+
+Conte comigo para o que precisar! 🚀🚓
+
+Um abraço e bons códigos! 👋✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
