@@ -50,9 +50,13 @@ async function getAgentByCase(req, res) {
 
         const agent = await casosRepository.agentByCase(id);
 
+        if (!agent) {
+            return handleNotFound(res, 'Caso ou Agente não encontrado');
+        }
+
         return res.status(200).json(agent);
     } catch (error) {
-        return handleBadRequest(res, error.message || 'Caso ou Agente não encontrado');
+        return handleBadRequest(res, error.message || 'Erro na busca');
     }
     
 }

@@ -17,7 +17,7 @@ exports.up = function(knex) {
       table.enu('status', ['aberto', 'solucionado']).notNullable();
       table
         .integer('agente_id')
-        .unsigned() // irrelevante no Postgres, mas ok
+        .unsigned()
         .notNullable()
         .references('id')
         .inTable('agentes')
