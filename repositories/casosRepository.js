@@ -71,21 +71,19 @@ async function casesByStatus(status) {
 }
 
 async function agentByCase(caseId) {
-    try {
-        const result = await db('casos')
-        .select('agentes.*') // Seleciono todas as colunas da tabela agentes
-        .join('agentes', 'casos.agente_id','=','agentes.id') // faço o join
-        .where('casos.id', caseId) // filtro pelo ID do caso
-        .first(); // Retorno apenas o primeiro resultado
+  
+    const result = await db('casos')
+    .select('agentes.*') // Seleciono todas as colunas da tabela agentes
+    .join('agentes', 'casos.agente_id','=','agentes.id') // faço o join
+    .where('casos.id', caseId) // filtro pelo ID do caso
+    .first(); // Retorno apenas o primeiro resultado
 
-        if (!result) {
-            return null;
-        }
-
-        return result;
-    } catch (error) {
-        throw new Error('Não foi possível buscar o agente responsável pelo caso.');
+    if (!result) {
+        return null;
     }
+
+    return result;
+
 }
 
 async function addNewCaseOnRepo(newCase){

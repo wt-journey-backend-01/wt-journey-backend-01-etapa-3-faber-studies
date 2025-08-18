@@ -48,16 +48,11 @@ async function getAgentByCase(req, res) {
             return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
         }
 
-        const case_ = await casosRepository.caseById(id);
-        if(!case_) {
-            return handleNotFound(res, 'Caso não encontrado');
-        }
-
-        const agent = await casosRepository.agentByCase(id);;
+        const agent = await casosRepository.agentByCase(id);
 
         return res.status(200).json(agent);
     } catch (error) {
-        return handleBadRequest(res, error.message || 'Erro ao buscar agente pelo caso');
+        return handleBadRequest(res, error.message || 'Caso ou Agente não encontrado');
     }
     
 }

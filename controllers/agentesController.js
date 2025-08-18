@@ -48,11 +48,12 @@ async function getCasesByAgent(req, res) {
             return handleBadRequest(res, 'ID inválido. O ID deve ser um número inteiro.');
         }
 
-        const cases = await agentesRepository.casesByAgent(id);
-
-        if (cases.length == 0) {
-            return handleNotFound(res, "Nenhum caso encontrado para esse agente.");
+        const agentExists = await agentesRepository.agentsById(id);
+        if (!agentExists) {
+            return handleNotFound(res, 'Agente não encontrado');
         }
+
+        const cases = await agentesRepository.casesByAgent(id);
         
         res.status(200).json(cases);
 
@@ -91,6 +92,8 @@ async function addNewAgent(req, res) {
 
         if (createdAgent) {
             return handleCreated(res, createdAgent);
+        } else {
+            return handleBadRequest(res, 'Não foi possível adicionar o novo agente');
         }
 
 
@@ -134,10 +137,6 @@ async function updateAgent(req, res) {
         }
 
         const updatedAgent = await agentesRepository.updateAgentOnRepo(id, {nome, dataDeIncorporacao, cargo});
-
-        if (!updatedAgent) {
-            return handleNotFound(res, 'Agente não encontrado!');
-        }
 
         res.status(200).json(updatedAgent);
 
